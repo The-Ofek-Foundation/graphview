@@ -1,6 +1,6 @@
 part of graphview;
 
-class SugiyamaEdgeRenderer extends ArrowEdgeRenderer {
+class SugiyamaEdgeRenderer extends NoArrowEdgeRenderer {
   Map<Node, SugiyamaNodeData> nodeData;
   Map<Edge, SugiyamaEdgeData> edgeData;
   BendPointShape bendPointShape;

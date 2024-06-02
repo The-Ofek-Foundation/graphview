@@ -3,15 +3,11 @@ part of graphview;
 const double ARROW_DEGREES = 0.5;
 const double ARROW_LENGTH = 10;
 
-class ArrowEdgeRenderer extends EdgeRenderer {
+class NoArrowEdgeRenderer extends EdgeRenderer {
   var trianglePath = Path();
 
   @override
   void render(Canvas canvas, Graph graph, Paint paint) {
-    var trianglePaint = Paint()
-      ..color = paint.color
-      ..style = PaintingStyle.fill;
-
     graph.edges.forEach((edge) {
       var source = edge.source;
       var destination = edge.destination;
@@ -26,24 +22,9 @@ class ArrowEdgeRenderer extends EdgeRenderer {
       var x2 = destinationOffset.dx;
       var y2 = destinationOffset.dy;
 
-      var startX = x1 + source.width / 2;
-      var startY = y1 + source.height / 2;
-      var stopX = x2 + destination.width / 2;
-      var stopY = y2 + destination.height / 2;
+      var clippedLine = clipLine(x1, y1, x2, y2, destination);
 
-      var clippedLine = clipLine(startX, startY, stopX, stopY, destination);
-
-      Paint? edgeTrianglePaint;
-      if (edge.paint != null) {
-        edgeTrianglePaint = Paint()
-          ..color = edge.paint?.color ?? paint.color
-          ..style = PaintingStyle.fill;
-      }
-
-      var triangleCentroid = drawTriangle(
-          canvas, edgeTrianglePaint ?? trianglePaint, clippedLine[0], clippedLine[1], clippedLine[2], clippedLine[3]);
-
-      canvas.drawLine(Offset(clippedLine[0], clippedLine[1]), Offset(triangleCentroid[0], triangleCentroid[1]),
+      canvas.drawLine(Offset(clippedLine[0], clippedLine[1]), Offset(clippedLine[2], clippedLine[3]),
           edge.paint ?? paint);
     });
   }

@@ -241,10 +241,10 @@ class _GraphViewAnimated extends StatefulWidget {
   final Paint? paint;
   final NodeWidgetBuilder builder;
   final stepMilis = 25;
+  // final stepMilis = 1000;
 
   _GraphViewAnimated(
-      {Key? key, required this.graph, required this.algorithm, this.paint, required this.builder}) {
-  }
+      {Key? key, required this.graph, required this.algorithm, this.paint, required this.builder});
 
   @override
   _GraphViewAnimatedState createState() => _GraphViewAnimatedState();
@@ -254,6 +254,8 @@ class _GraphViewAnimatedState extends State<_GraphViewAnimated> {
   late Timer timer;
   late Graph graph;
   late Algorithm algorithm;
+
+  final Map<int, GlobalKey> nodeKeys = {};
 
   @override
   void initState() {
@@ -279,31 +281,53 @@ class _GraphViewAnimatedState extends State<_GraphViewAnimated> {
     super.dispose();
   }
 
+  void updateNodeSize(GlobalKey key, Node node) {
+    if (key.currentContext != null) {
+      final renderBox = key.currentContext!.findRenderObject() as RenderBox;
+      node.size = renderBox.size;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    algorithm.setDimensions(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height);
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        var size = Size(constraints.maxWidth, MediaQuery.of(context).size.height);
+        algorithm.setDimensions(size.width, size.height);
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        CustomPaint(
-          size: MediaQuery.of(context).size,
-          painter: EdgeRender(algorithm, graph, Offset(20, 20)),
-        ),
-        ...List<Widget>.generate(graph.nodeCount(), (index) {
-          return Positioned(
-            child: GestureDetector(
-              child: graph.nodes[index].data ?? widget.builder(graph.nodes[index]),
-              onPanUpdate: (details) {
-                graph.getNodeAtPosition(index).position += details.delta;
-                update();
-              },
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            CustomPaint(
+              size: size,
+              painter: EdgeRender(algorithm, graph, Offset(0, 0)),
             ),
-            top: graph.getNodeAtPosition(index).position.dy,
-            left: graph.getNodeAtPosition(index).position.dx,
-          );
-        }),
-      ],
+            ...List<Widget>.generate(graph.nodeCount(), (index) {
+              var node = graph.nodes[index];
+              final key = nodeKeys.putIfAbsent(index, () => GlobalKey());
+
+              if (node.size == Size.zero) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  updateNodeSize(key, node);
+                });
+              }
+
+              return Positioned(
+                key: key,
+                child: GestureDetector(
+                  child: widget.builder(node),
+                  onPanUpdate: (details) {
+                    node.position += details.delta;
+                    update();
+                  },
+                ),
+                top: node.position.dy - node.size.height / 2,
+                left: node.position.dx - node.size.width / 2,
+              );
+            }),
+          ],
+        );
+      }
     );
   }
 

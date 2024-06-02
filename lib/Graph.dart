@@ -159,7 +159,7 @@ class Node {
     key = ValueKey(id);
   }
 
-  Size size = Size(0, 0);
+  Size size = Size.zero;
 
   Offset position = Offset(0, 0);
 
@@ -203,7 +203,7 @@ class Edge {
   Edge(this.source, this.destination, {this.key, this.paint});
 
   @override
-  bool operator ==(Object? other) => identical(this, other) || other is Edge && hashCode == other.hashCode;
+  bool operator ==(Object other) => identical(this, other) || other is Edge && hashCode == other.hashCode;
 
   @override
   int get hashCode => key?.hashCode ?? Object.hash(source, destination);
