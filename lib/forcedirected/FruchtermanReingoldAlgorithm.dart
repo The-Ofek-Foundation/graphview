@@ -37,7 +37,7 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
   }
   
   void shuffleNodes(Graph graph) {
-    var boundary = 0.1;
+    var boundary = 0.15;
 
     graph.nodes.forEach((node) {
       displacement[node] = Offset.zero;
