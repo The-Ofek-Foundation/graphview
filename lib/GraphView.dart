@@ -45,9 +45,11 @@ class GraphView extends StatefulWidget {
   final Paint? paint;
   final NodeWidgetBuilder builder;
   final bool animated;
+  final double width;
+  final double height;
 
   GraphView(
-      {Key? key, required this.graph, required this.algorithm, this.paint, required this.builder, this.animated = true})
+      {Key? key, required this.graph, required this.algorithm, this.paint, required this.builder, this.animated = true, required this.width, required this.height})
       : super(key: key);
 
   @override
@@ -64,6 +66,8 @@ class _GraphViewState extends State<GraphView> {
         algorithm: widget.algorithm,
         paint: widget.paint,
         builder: widget.builder,
+        width: widget.width,
+        height: widget.height,
       );
     } else {
       return _GraphView(
@@ -240,11 +244,12 @@ class _GraphViewAnimated extends StatefulWidget {
   final Algorithm algorithm;
   final Paint? paint;
   final NodeWidgetBuilder builder;
+  final double width;
+  final double height;
   final stepMilis = 25;
-  // final stepMilis = 1000;
 
   _GraphViewAnimated(
-      {Key? key, required this.graph, required this.algorithm, this.paint, required this.builder});
+      {Key? key, required this.graph, required this.algorithm, this.paint, required this.builder, required this.width, required this.height});
 
   @override
   _GraphViewAnimatedState createState() => _GraphViewAnimatedState();
@@ -290,44 +295,39 @@ class _GraphViewAnimatedState extends State<_GraphViewAnimated> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        var size = Size(constraints.maxWidth, MediaQuery.of(context).size.height);
-        algorithm.setDimensions(size.width, size.height);
+    algorithm.setDimensions(widget.width, widget.height);
 
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            CustomPaint(
-              size: size,
-              painter: EdgeRender(algorithm, graph, Offset(0, 0)),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        CustomPaint(
+          size: Size(widget.width, widget.height),
+          painter: EdgeRender(algorithm, graph, Offset(0, 0)),
+        ),
+        ...List<Widget>.generate(graph.nodeCount(), (index) {
+          var node = graph.nodes[index];
+          final key = nodeKeys.putIfAbsent(index, () => GlobalKey());
+
+          if (node.size == Size.zero) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              updateNodeSize(key, node);
+            });
+          }
+
+          return Positioned(
+            key: key,
+            child: GestureDetector(
+              child: widget.builder(node),
+              onPanUpdate: (details) {
+                node.position += details.delta;
+                update();
+              },
             ),
-            ...List<Widget>.generate(graph.nodeCount(), (index) {
-              var node = graph.nodes[index];
-              final key = nodeKeys.putIfAbsent(index, () => GlobalKey());
-
-              if (node.size == Size.zero) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  updateNodeSize(key, node);
-                });
-              }
-
-              return Positioned(
-                key: key,
-                child: GestureDetector(
-                  child: widget.builder(node),
-                  onPanUpdate: (details) {
-                    node.position += details.delta;
-                    update();
-                  },
-                ),
-                top: node.position.dy - node.size.height / 2,
-                left: node.position.dx - node.size.width / 2,
-              );
-            }),
-          ],
-        );
-      }
+            top: node.position.dy - node.size.height / 2,
+            left: node.position.dx - node.size.width / 2,
+          );
+        }),
+      ],
     );
   }
 
