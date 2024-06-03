@@ -72,7 +72,7 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
       displacement[node] = Offset.zero;
     });
 
-    if (numNoShuffles < 5 && !needToShuffleNodes && tooClustered(graph)) {
+    if (numNoShuffles < 100 && !needToShuffleNodes && tooClustered(graph)) {
       needToShuffleNodes = true;
       boundary = min(0.4, boundary + 0.05);
     }
