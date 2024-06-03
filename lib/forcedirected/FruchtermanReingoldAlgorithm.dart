@@ -22,6 +22,9 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
   double attractionPercentage = ATTRACTION_PERCENTAGE;
 
   bool needToShuffleNodes = true;
+  double boundary = 0.05;
+  double boundaryWidth = 10.0;
+  var numNoShuffles = 0;
 
   @override
   EdgeRenderer? renderer;
@@ -37,11 +40,23 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
   }
   
   void shuffleNodes(Graph graph) {
-    var boundary = 0.2;
-
+    var centerX = graphWidth / 2;
+    var centerY = graphHeight / 2;
+    var a = graphWidth * (1 - 2 * boundary) / 2; // semi-major axis
+    var b = graphHeight * (1 - 2 * boundary) / 2; // semi-minor axis
+    
     graph.nodes.forEach((node) {
       displacement[node] = Offset.zero;
-      node.position = Offset(rand.nextDouble() * graphWidth * (1 - 2 * boundary), rand.nextDouble() * graphHeight * (1 - 2 * boundary)) + Offset(graphWidth * boundary, graphHeight * boundary);
+
+      // Generate random angle and radius within the oval
+      var angle = rand.nextDouble() * 2 * pi;
+      var radius = sqrt(rand.nextDouble());
+
+      // Calculate the random position within the oval
+      var x = centerX + a * radius * cos(angle);
+      var y = centerY + b * radius * sin(angle);
+
+      node.position = Offset(x, y);
     });
   }
 
@@ -57,9 +72,17 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
       displacement[node] = Offset.zero;
     });
 
+    if (numNoShuffles < 5 && !needToShuffleNodes && tooClustered(graph)) {
+      needToShuffleNodes = true;
+      boundary = min(0.4, boundary + 0.05);
+    }
+
+    ++numNoShuffles;
+
     if (needToShuffleNodes) {
       shuffleNodes(graph);
-      needToShuffleNodes = false;
+      needToShuffleNodes = tooClustered(graph);
+      numNoShuffles = 0;
     }
 
     calculateRepulsion(graph.nodes);
@@ -74,6 +97,18 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
       double newDY = min(graphHeight - node.size.height / 2, max(node.size.height / 2, newPosition.dy));
 
       node.position = Offset(newDX, newDY);
+    });
+  }
+
+  bool tooClustered(Graph graph) {
+    return graph.nodes.any((nodeA) {
+      var rect = nodeRect(nodeA);
+
+      if (rect.left > boundaryWidth + EPSILON && rect.top > boundaryWidth + EPSILON && rect.right < graphWidth - boundaryWidth - EPSILON && rect.bottom < graphHeight - boundaryWidth - EPSILON) {
+        return false;
+      }
+
+      return graph.nodes.any((nodeB) => nodeA != nodeB && rect.intersects(nodeRect(nodeB)));
     });
   }
 
@@ -151,7 +186,6 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
     var displacementRight = Offset(-0.1, 0);
     var displacementTop = Offset(0, 0.1);
     var displacementBottom = Offset(0, -0.1);
-    var boundaryWidth = 10.0;
 
     nodes.forEach((nodeA) {
       // normalize magnitude to 1 of the displacement
@@ -165,7 +199,7 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
 
       displacement[nodeA] = displacement[nodeA]! + displacementLeft / deltaLeft + displacementRight / deltaRight + displacementTop / deltaTop + displacementBottom / deltaBottom;
 
-      if (displacement[nodeA]!.distance <= 1) {
+      if (displacement[nodeA]!.distance == 0) {
         return;
       }
 
