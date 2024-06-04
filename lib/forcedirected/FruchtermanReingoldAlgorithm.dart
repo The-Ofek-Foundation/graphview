@@ -104,10 +104,21 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
     return graph.nodes.any((nodeA) {
       var rect = nodeRect(nodeA);
 
-      return rect.left <= boundaryWidth + EPSILON ||
-       rect.top <= boundaryWidth + EPSILON ||
-       rect.right >= graphWidth - boundaryWidth - EPSILON ||
-       rect.bottom >= graphHeight - boundaryWidth - EPSILON;
+      var numBoundaryCollisions = 0;
+      if (rect.left <= boundaryWidth + EPSILON) {
+        numBoundaryCollisions++;
+      }
+      if (rect.top <= boundaryWidth + EPSILON) {
+        numBoundaryCollisions++;
+      }
+      if (rect.right >= graphWidth - boundaryWidth - EPSILON) {
+        numBoundaryCollisions++;
+      }
+      if (rect.bottom >= graphHeight - boundaryWidth - EPSILON) {
+        numBoundaryCollisions++;
+      }
+
+      return numBoundaryCollisions > 1;
     });
   }
 
