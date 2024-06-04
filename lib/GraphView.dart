@@ -246,7 +246,7 @@ class _GraphViewAnimated extends StatefulWidget {
   final NodeWidgetBuilder builder;
   final double width;
   final double height;
-  final stepMilis = 25;
+  final stepMilis = 5;
 
   _GraphViewAnimated(
       {Key? key, required this.graph, required this.algorithm, this.paint, required this.builder, required this.width, required this.height});

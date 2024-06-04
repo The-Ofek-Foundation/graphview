@@ -170,7 +170,7 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
   }
 
   void calculateRepulsion(List<Node> nodes) {
-    double maxInfluenceDistance = min(graphWidth, graphHeight) / 5;
+    var maxInfluenceDistance = min(graphWidth, graphHeight) / 5;
 
     void updateIfCloseEnough(Node node, double distance, Offset delta) {
       if (distance < maxInfluenceDistance) {
@@ -202,8 +202,6 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
     var displacementBottom = Offset(0, -0.1);
 
     nodes.forEach((nodeA) {
-      // normalize magnitude to 1 of the displacement
-      // add displacement from all four boundaries, using lattice distance
       var rect = nodeRect(nodeA);
 
       var deltaLeft = max(EPSILON, rect.left - boundaryWidth);
@@ -220,7 +218,7 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
         return;
       }
 
-      displacement[nodeA] = displacement[nodeA]! / max(displacement[nodeA]!.distance, 0.01) * 2;
+      displacement[nodeA] = displacement[nodeA]! / max(displacement[nodeA]!.distance, 0.05) * 2;
     });
   }
 
