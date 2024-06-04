@@ -202,7 +202,7 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
         return;
       }
 
-      displacement[nodeA] = displacement[nodeA]! / displacement[nodeA]!.distance;
+      displacement[nodeA] = displacement[nodeA]! / displacement[nodeA]!.distance * 2;
     });
   }
 
