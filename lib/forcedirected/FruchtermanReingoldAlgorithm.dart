@@ -170,18 +170,22 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
   }
 
   void calculateRepulsion(List<Node> nodes) {
+    double maxInfluenceDistance = min(graphWidth, graphHeight) / 5;
+
+    void updateIfCloseEnough(Node node, double distance, Offset delta) {
+      if (distance < maxInfluenceDistance) {
+        displacement[node] = displacement[node]! + delta;
+      }
+    }
+
     void updateDisplacement(Node nodeA, Node nodeB) {
       var delta = nodeA.position - nodeB.position;
       var deltaDistance = max(EPSILON, nodeDistance(nodeA, nodeB)); //protect for 0
 
-      if (deltaDistance > min(graphWidth, graphHeight) / 5) {
-        return;
-      }
-
-      var repulsionForce = 1 / deltaDistance;
+      var repulsionForce = 1 / pow(deltaDistance, 2);
       var repulsionVector = delta * repulsionForce * repulsionRate;
 
-      displacement[nodeA] = displacement[nodeA]! + repulsionVector;
+      updateIfCloseEnough(nodeA, deltaDistance, repulsionVector);
     }
 
     nodes.forEach((nodeA) {
@@ -207,13 +211,16 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
       var deltaTop = max(EPSILON, rect.top - boundaryWidth);
       var deltaBottom = max(EPSILON, graphHeight - rect.bottom - boundaryWidth);
 
-      displacement[nodeA] = displacement[nodeA]! + displacementLeft / deltaLeft + displacementRight / deltaRight + displacementTop / deltaTop + displacementBottom / deltaBottom;
+      updateIfCloseEnough(nodeA, deltaLeft, displacementLeft / (deltaLeft * deltaLeft));
+      updateIfCloseEnough(nodeA, deltaRight, displacementRight / (deltaRight * deltaRight));
+      updateIfCloseEnough(nodeA, deltaTop, displacementTop / (deltaTop * deltaTop));
+      updateIfCloseEnough(nodeA, deltaBottom, displacementBottom / (deltaBottom * deltaBottom));
 
       if (displacement[nodeA]!.distance == 0) {
         return;
       }
 
-      displacement[nodeA] = displacement[nodeA]! / displacement[nodeA]!.distance * 2;
+      displacement[nodeA] = displacement[nodeA]! / max(displacement[nodeA]!.distance, 0.01) * 2;
     });
   }
 
